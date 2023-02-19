@@ -15,7 +15,12 @@ message(STATUS "GLM included at ${GLM_INCLUDE_DIR}")
 find_package(GLFW3 REQUIRED)
 message(STATUS "Found GLFW3 in ${GLFW3_INCLUDE_DIR}")
 
-include_directories( 
+add_definitions(
+    -DUSE_GLAD
+    -DUSE_GLFW
+)
+
+include_directories(
     "${PROJECT_SOURCE_DIR}/thirdparty/include"
     ${GLM_INCLUDE_DIR}
     ${GLFW3_INCLUDE_DIR})
@@ -25,3 +30,6 @@ add_library(GLAD "thirdparty/src/glad.c")
 set(LIBS  ${GLFW3_LIBRARY} ${OpenGL_LIBRARY} GLAD)
 add_executable(${PROJECT_NAME} test.c )
 target_link_libraries(${PROJECT_NAME} ${LIBS})
+
+add_executable(triangle triangle.cpp)
+target_link_libraries(triangle ${LIBS})
