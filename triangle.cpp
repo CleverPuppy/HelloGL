@@ -1,5 +1,4 @@
 #include "opengl_utils.hpp"
-#include <OpenGL/gl.h>
 #include <cassert>
 #include <cstddef>
 

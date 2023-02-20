@@ -8,8 +8,8 @@ find_package(OpenGL REQUIRED)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 # GLM
-find_package(GLM REQUIRED)
-message(STATUS "GLM included at ${GLM_INCLUDE_DIR}")
+#find_package(GLM REQUIRED)
+#message(STATUS "GLM included at ${GLM_INCLUDE_DIR}")
 
 # GLFW
 find_package(GLFW3 REQUIRED)
@@ -22,7 +22,7 @@ add_definitions(
 
 include_directories(
     "${PROJECT_SOURCE_DIR}/thirdparty/include"
-    ${GLM_INCLUDE_DIR}
+#    ${GLM_INCLUDE_DIR}
     ${GLFW3_INCLUDE_DIR})
 
 add_library(GLAD "thirdparty/src/glad.c")

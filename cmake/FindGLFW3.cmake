@@ -19,12 +19,14 @@ set( _glfw3_HEADER_SEARCH_DIRS
 "/usr/local/include"
 "${CMAKE_SOURCE_DIR}/include"
 "C:/Program Files (x86)/glfw/include"
+"C:/Program Files/glfw/include"
 "/opt/homebrew/include" )
 set( _glfw3_LIB_SEARCH_DIRS
 "/usr/lib"
 "/usr/local/lib"
 "${CMAKE_SOURCE_DIR}/lib"
 "C:/Program Files (x86)/glfw/lib-msvc110"
+"C:/Program Files/glfw/lib-vc2022"
 "/opt/homebrew/lib" )
 
 # Check environment for root search directory
