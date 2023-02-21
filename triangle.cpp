@@ -4,9 +4,10 @@
 
 int main()
 {
+    GLProgramVersion glVersion{ API_TYPE::GLES, 3, 2 };
     GLFWHelper glfwHelper;
-    glfwHelper.InitWindow(500, 400, "test", ContextType::OpenGL, 4, 1);
-    glfwHelper.Render([](){
+    glfwHelper.InitWindow(500, 400, "test", glVersion);
+    glfwHelper.Render([&glVersion](){
         glClearColor(0.2, 0.3, 0.4, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -35,7 +36,7 @@ int main()
         glEnableVertexAttribArray(1);
 
         GLProgramGenerator programGen;
-        GLuint program = programGen.AppendShader(GL_VERTEX_SHADER, R"(#version 410 core
+        GLuint program = programGen.AppendShader(glVersion, GL_VERTEX_SHADER, R"(
             layout(location = 0) in vec2 Pos;
             layout(location = 1) in vec3 Color;
             out vec4 out_Color;
@@ -44,7 +45,7 @@ int main()
                 gl_Position = vec4(Pos, 1, 1);
                 out_Color = vec4(Color, 1);
             }
-        )").AppendShader(GL_FRAGMENT_SHADER, R"(#version 410
+        )").AppendShader(glVersion, GL_FRAGMENT_SHADER,  R"(
             in vec4 out_Color;
             out vec4 color;
             void main()

@@ -12,6 +12,7 @@
 #include <functional>
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #define __valid_or_ret(val)                                                    \
   if (!valid)                                                                  \
@@ -35,6 +36,32 @@ struct vec4 {
   float w;
 };
 
+enum class API_TYPE
+{
+    OGL,
+    GLES
+};
+
+class GLProgramVersion
+{
+public:
+    GLProgramVersion(API_TYPE eType, int major, int minor):
+        eType(eType), major(major), minor(minor) {
+        std::stringstream ss;
+        ss << "#version " << GetGLSLVersion() <<
+            (eType == API_TYPE::OGL ? " core" : " es") << "\n";
+        strGLSLVersionMacroLine = ss.str();
+    }
+
+    const API_TYPE eType;
+    const int major;
+    const int minor;
+
+    const std::string& GLSLVersionMacroLine() const{ return strGLSLVersionMacroLine; }
+private:
+    int GetGLSLVersion() { return major * 100 + minor * 10; }
+    std::string strGLSLVersionMacroLine;
+};
 
 class GLProgramGenerator {
   enum SHADER_TYPE { VERTEX = 0, FRAGMENT = 1, MAX_SHADER_SIZE };
@@ -90,6 +117,13 @@ public:
     return *this;
   }
 
+  inline GLProgramGenerator& AppendShader(const GLProgramVersion &glver, GLenum ShaderType,
+      const std::string &ShaderSrc)
+  {
+      std::string strAppendVersionSrc = glver.GLSLVersionMacroLine() + ShaderSrc;
+      return AppendShader(ShaderType, strAppendVersionSrc);
+  }
+
   inline GLuint AttachAndLink() {
     __valid_or_ret(-1);
 
@@ -142,16 +176,23 @@ private:
   inline void MakeExistShader(int idx) { shader_exists_status[idx] = true; }
 };
 
-enum class ContextType { OpenGL, OpenGLES };
-
 #ifdef USE_GLFW
 class GLFWHelper {
 public:
   GLFWHelper() = default;
   ~GLFWHelper() = default;
 
+  inline bool InitWindow(int width, int height, const std::string& windowTitle,
+      const GLProgramVersion& glVersion)
+  {
+      return InitWindow(width, height, windowTitle,
+          glVersion.eType,
+          glVersion.major,
+          glVersion.minor);
+  }
+
   inline bool InitWindow(int width, int height, const std::string &windowTitle,
-                         ContextType type, int major, int minor) {
+      API_TYPE type, int major, int minor) {
     this->width = width;
     this->height = height;
 
@@ -162,8 +203,20 @@ public:
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    if (type == API_TYPE::OGL)
+    {
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+    }
+    else
+    {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+    }
+
+#ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // for mac only
+#endif
 
     window =
         glfwCreateWindow(width, height, windowTitle.c_str(), nullptr, nullptr);
