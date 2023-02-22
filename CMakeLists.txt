@@ -31,7 +31,7 @@ set(LIBS  ${GLFW3_LIBRARY} ${OpenGL_LIBRARY} GLAD)
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     MESSAGE(STATUS "current platform: Linux ")
-    set(LIBS ${LIBS} -ldl)
+    set(LIBS ${LIBS} -ldl -lX11 -lEGL)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 add_executable(${PROJECT_NAME} test.c )
@@ -39,3 +39,6 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 add_executable(triangle triangle.cpp)
 target_link_libraries(triangle ${LIBS})
+
+add_executable(triangle_egl triangle_x11egl.cpp)
+target_link_libraries(triangle_egl ${LIBS})
