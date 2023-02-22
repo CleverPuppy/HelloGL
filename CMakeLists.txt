@@ -28,6 +28,12 @@ include_directories(
 add_library(GLAD "thirdparty/src/glad.c")
 
 set(LIBS  ${GLFW3_LIBRARY} ${OpenGL_LIBRARY} GLAD)
+
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    MESSAGE(STATUS "current platform: Linux ")
+    set(LIBS ${LIBS} -ldl)
+ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
+
 add_executable(${PROJECT_NAME} test.c )
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 

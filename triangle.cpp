@@ -4,7 +4,7 @@
 
 int main()
 {
-    GLProgramVersion glVersion{ API_TYPE::GLES, 3, 2 };
+    GLProgramVersion glVersion{ API_TYPE::OGL, 3, 3 };
     GLFWHelper glfwHelper;
     glfwHelper.InitWindow(500, 400, "test", glVersion);
 
