@@ -329,6 +329,7 @@ private:
     {
         if(bFinalised) return;
         data.push_back(EGL_NONE);
+        bFinalised = true;
     }
 };
 
