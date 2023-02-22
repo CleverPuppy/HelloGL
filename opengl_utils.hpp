@@ -651,8 +651,8 @@ private:
     }
     EGLBoolean ok = EGL_TRUE;
     // Bind API
-    // ok = eglBindAPI( (type == API_TYPE::OGL ?  EGL_OPENGL_API : EGL_OPENGL_ES_API));
-    // Assert(ok && "Failed to eglBindAPI for EGL");
+    ok = eglBindAPI( (type == API_TYPE::OGL ?  EGL_OPENGL_API : EGL_OPENGL_ES_API));
+    Assert(ok && "Failed to eglBindAPI for EGL");
 
     // choose EGL configuration
     {
