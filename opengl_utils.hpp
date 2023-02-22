@@ -1,3 +1,5 @@
+#pragma once
+
 #include <functional>
 #ifdef USE_GLAD
 #include "glad/glad.h"
@@ -10,6 +12,7 @@
 #ifdef __linux__
 #include <X11/Xlib.h>
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include "unistd.h"
 #endif
 
@@ -597,6 +600,103 @@ private:
               }
           }
       }
+  }
+};
+
+class SurfaceLessHelper
+{
+public:
+  SurfaceLessHelper() = default;
+
+  bool Init(const GLProgramVersion& glVersion) {
+    bool ok = InitEglSurfaceless(glVersion.eType, glVersion.major, glVersion.minor);
+    if(!ok) {
+      std::cerr << "InitEglSurfaceless failed." << std::endl;
+      return false;
+    }
+
+    #ifdef USE_GLAD
+    if (!gladLoadGLLoader((GLADloadproc)eglGetProcAddress)) {
+      std::cerr << "gladLoadGLLoader failed." << std::endl;
+      eglTerminate(display);
+      return false;
+    }
+#endif
+    return true;
+  }
+
+private:
+  EGLDisplay* display;
+  EGLConfig config;
+  EGLContext* context;
+
+  bool InitEglSurfaceless(API_TYPE type, int major, int minor) {
+    std::cout << "Creating EGL Surfaceless " << (type == API_TYPE::OGL ? "GL" : " GLES") << std::endl;
+
+    // initialize EGL
+    {
+        display = (EGLDisplay*)eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA,
+                    EGL_DEFAULT_DISPLAY, NULL);
+        Assert(display != EGL_NO_DISPLAY && "Failed to get EGL display");
+
+        EGLint major, minor;
+        if (!eglInitialize(display, &major, &minor))
+        {
+            Assert(0 && "Cannot initialize EGL display");
+        }
+        if (major < 1 || (major == 1 && minor < 5))
+        {
+            Assert(0 && "EGL version 1.5 or higher required");
+        }
+    }
+    EGLBoolean ok = EGL_TRUE;
+    // Bind API
+    // ok = eglBindAPI( (type == API_TYPE::OGL ?  EGL_OPENGL_API : EGL_OPENGL_ES_API));
+    // Assert(ok && "Failed to eglBindAPI for EGL");
+
+    // choose EGL configuration
+    {
+        EglAttrBuilder attrBuilder;
+
+        // attrBuilder.AppendAttr( EGL_SURFACE_TYPE, EGL_WINDOW_BIT );
+        if(type == API_TYPE::OGL)
+        {
+            attrBuilder.AppendAttr(EGL_CONFORMANT, EGL_OPENGL_BIT);
+            attrBuilder.AppendAttr(EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
+        }
+        else
+        {
+            attrBuilder.AppendAttr(EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT);
+        }
+
+        EGLint count;
+        if (!eglChooseConfig(display, attrBuilder.GetAttr(), &config, 1, &count))
+        {
+            Assert(0 && "Cannot choose EGL config");
+        }
+    }
+
+    // create EGL context
+    {
+        EglAttrBuilder attrBuilder;
+        attrBuilder.AppendAttr(EGL_CONTEXT_MAJOR_VERSION, major);
+        attrBuilder.AppendAttr(EGL_CONTEXT_MINOR_VERSION, minor);
+        if(type == API_TYPE::OGL)
+        {
+            attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT);
+        }
+#ifndef NDEBUG
+        attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_DEBUG, EGL_TRUE);
+#endif
+
+        context = (EGLContext*)eglCreateContext(display, config, EGL_NO_CONTEXT, attrBuilder.GetAttr());
+        Assert(context != EGL_NO_CONTEXT && "Cannot create EGL context, Version not supported?");
+    }
+
+    ok = eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context);
+    Assert(ok && "Failed to make context current");
+
+    return true;
   }
 };
 

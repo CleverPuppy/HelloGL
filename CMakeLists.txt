@@ -42,3 +42,6 @@ target_link_libraries(triangle ${LIBS})
 
 add_executable(triangle_egl triangle_x11egl.cpp)
 target_link_libraries(triangle_egl ${LIBS})
+
+add_executable(surfaceless_test surfaceless_test.cpp)
+target_link_libraries(surfaceless_test ${LIBS})
