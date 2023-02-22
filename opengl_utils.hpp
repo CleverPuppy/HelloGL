@@ -378,7 +378,7 @@ static X11Window InitX11(uint width, uint height, const char* strWindowName)
     //XFree(hints);
 
     // set window title
-    XStoreName(dpy, window, "OpenGL Window");
+    XStoreName(dpy, window, strWindowName);
 
     // subscribe to window close notification
     Atom WM_PROTOCOLS = XInternAtom(dpy, "WM_PROTOCOLS", False);
