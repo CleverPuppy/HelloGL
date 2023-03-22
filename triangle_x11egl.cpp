@@ -5,6 +5,7 @@
 int main()
 {
     GLProgramVersion glVersion{ API_TYPE::OGL, 3, 3 };
+    // GLProgramVersion glVersion{ API_TYPE::GLES, 3, 2 };
     X11EglHelper x11EglHelper;
     x11EglHelper.InitWindow(500, 400, "test", glVersion);
 
@@ -43,6 +44,7 @@ int main()
                 out_Color = vec4(Color, 1);
             }
         )").AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
+            precision highp float;
             in vec4 out_Color;
             out vec4 color;
             void main()
