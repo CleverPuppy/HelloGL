@@ -31,7 +31,7 @@ set(LIBS  ${GLFW3_LIBRARY} ${OpenGL_LIBRARY} GLAD )
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     MESSAGE(STATUS "current platform: Linux ")
-    set(LIBS ${LIBS} -ldl -lX11 -lEGL)
+    set(LIBS ${LIBS} -ldl -lX11 -lEGL -lGLX)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 function(add_singlefile_exec)
@@ -45,6 +45,7 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 IF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 add_singlefile_exec(triangle_x11egl)
 add_singlefile_exec(surfaceless_test)
+add_singlefile_exec(pixmap_test)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 add_singlefile_exec(triangle)
