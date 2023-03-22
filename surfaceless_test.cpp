@@ -3,7 +3,9 @@
 int main()
 {
     auto helper = SurfaceLessHelper();
-    auto glVersion = GLProgramVersion{API_TYPE::GL, 3, 2};
+    // auto glVersion = GLProgramVersion{API_TYPE::OGL, 3, 3};
+    auto glVersion = GLProgramVersion{API_TYPE::GLES, 3, 2};
+
     Assert(helper.Init(glVersion));
 
     GLuint VAO, VBO;
@@ -69,6 +71,7 @@ int main()
 
     // bind texture to fbo
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, Tex, 0);
+    glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
     glClearColor(0.2, 0.1, 0.6, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -78,6 +81,15 @@ int main()
     glReadBuffer(GL_FRAMEBUFFER);
     glReadPixels(vwidth / 2, vheight / 2, 1, 1, GL_RGBA, GL_FLOAT, buff);
     std::cout << "central pixel is : " << buff[0] << "," << buff[1] << "," << buff[2] << "," << buff[3] << std::endl;
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+    /* create a second surface */
+    auto helper2  = X11EglHelper();
+    helper2.InitWindow(500, 500, "test egl", glVersion);
+    glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
     return 0;
 }

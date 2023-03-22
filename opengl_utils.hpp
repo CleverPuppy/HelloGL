@@ -625,6 +625,11 @@ public:
     return true;
   }
 
+  void UnbindContext()
+  {
+    eglMakeCurrent(*display, EGL_NO_SURFACE, EGL_NO_SURFACE, 0);
+  }
+
 private:
   EGLDisplay* display;
   EGLConfig config;
@@ -635,8 +640,7 @@ private:
 
     // initialize EGL
     {
-        display = (EGLDisplay*)eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA,
-                    EGL_DEFAULT_DISPLAY, NULL);
+        display = (EGLDisplay*)eglGetDisplay(EGL_DEFAULT_DISPLAY);
         Assert(display != EGL_NO_DISPLAY && "Failed to get EGL display");
 
         EGLint major, minor;
@@ -668,9 +672,14 @@ private:
         {
             attrBuilder.AppendAttr(EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT);
         }
-
+        attrBuilder.AppendAttr(EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER);
+        attrBuilder.AppendAttr(EGL_RED_SIZE, 8);
+        attrBuilder.AppendAttr(EGL_GREEN_SIZE, 8);
+        attrBuilder.AppendAttr(EGL_BLUE_SIZE, 8);
+        attrBuilder.AppendAttr(EGL_DEPTH_SIZE, 24);
+        attrBuilder.AppendAttr(EGL_STENCIL_SIZE, 8);
         EGLint count;
-        if (!eglChooseConfig(display, attrBuilder.GetAttr(), &config, 1, &count))
+        if (!eglChooseConfig(display, attrBuilder.GetAttr(), &config, 1, &count) || count != 1)
         {
             Assert(0 && "Cannot choose EGL config");
         }
