@@ -49,3 +49,4 @@ add_singlefile_exec(pixmap_test)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES "Linux")
 
 add_singlefile_exec(triangle)
+add_singlefile_exec(texture_test)
