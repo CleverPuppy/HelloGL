@@ -164,6 +164,32 @@ public:
     return program;
   }
 
+  /* Return a program rendering using one texture */
+  static GLuint SimpleTextureProgram(const GLProgramVersion& glVersion) {
+    GLProgramGenerator programGen;
+    GLuint program = programGen.AppendShader(glVersion, GL_VERTEX_SHADER, R"(
+            layout(location = 0) in vec3 Pos;
+            layout(location = 1) in vec2 TexCoord;
+            out vec2 out_TexCoord;
+            void main()
+            {
+                gl_Position = vec4(Pos, 1);
+                out_TexCoord = TexCoord;
+            }
+        )")
+        .AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
+            in vec2 out_TexCoord;
+            out vec4 color;
+            uniform sampler2D Tex;
+            void main()
+            {
+                color = texture(Tex, out_TexCoord);
+            }
+        )")
+        .AttachAndLink();
+    return program;
+  }
+
 private:
   std::array<bool, MAX_SHADER_SIZE> shader_exists_status;
   std::array<GLuint, MAX_SHADER_SIZE> shaders;

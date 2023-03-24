@@ -51,33 +51,13 @@ int main()
     glEnableVertexAttribArray(1);
 
 
-    GLProgramGenerator programGen;
-    GLuint program = programGen.AppendShader(glVersion, GL_VERTEX_SHADER, R"(
-            layout(location = 0) in vec3 Pos;
-            layout(location = 1) in vec2 TexCoord;
-            out vec2 out_TexCoord;
-            void main()
-            {
-                gl_Position = vec4(Pos, 1);
-                out_TexCoord = TexCoord;
-            }
-        )")
-        .AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
-            in vec2 out_TexCoord;
-            out vec4 color;
-            uniform sampler2D texture1;
-            void main()
-            {
-                color = texture(texture1, out_TexCoord);
-            }
-        )")
-        .AttachAndLink();
+    GLuint program = GLProgramGenerator::SimpleTextureProgram(glVersion);
     assert(program != (GLuint)-1);
 
     glUseProgram(program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glUniform1i(glGetUniformLocation(program, "texture1"), 0);
+    glUniform1i(glGetUniformLocation(program, "Tex"), 0);
 
     glfwHelper.Render([&glVersion, program, tex_width, tex_height, &data]()
                       {
