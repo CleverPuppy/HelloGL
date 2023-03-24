@@ -6,6 +6,9 @@
 #include "glad/glad.h"
 #include<GL/glx.h>
 #include<GL/glu.h>
+
+#include "opengl_utils.hpp"
+
 Display                 *dpy;
 Window                  root;
 GLint                   att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -50,7 +53,7 @@ void Redraw() {
     glViewport(0, 0, gwa.width, gwa.height);
     glClearColor(0.3, 0.3, 0.3, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     glXSwapBuffers(dpy, win);
 }
 
@@ -151,21 +154,66 @@ int main(int argc, char *argv[]) {
 
     glxpixmap = glXCreatePixmap(dpy, configs[0], pixmap, pixmap_attribs);
 
-    glEnable(GL_TEXTURE_2D);
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glXBindTexImageEXT(dpy, glxpixmap, GLX_FRONT_EXT, NULL);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    constexpr int tex_width = 500;
+    constexpr int tex_height = 500;
+    uint8_t data[tex_width * tex_height * 3];
+    for(int i = 0; i < tex_height * tex_width; ++i)
+    {
+        int idx = i * 3;
+        data[idx] = 50;
+        data[idx + 1] = 0;
+        data[idx + 2] = 100;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    GLfloat vertices[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f};
+
+    GLushort indices[] = {0, 1, 2, 0, 2, 3};
+
+    GLuint vbo, ibo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    GLProgramVersion glVersion{API_TYPE::OGL, 3, 3};
+    GLuint program = GLProgramGenerator::SimpleTextureProgram(glVersion);
+    assert(program != (GLuint)-1);
+
+    glUseProgram(program);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(program, "Tex"), 0);
 
     while(1) {
         XNextEvent(dpy, &xev);
 
         if(xev.type == Expose) {
             Redraw();
+            glXBindTexImageEXT(dpy, glxpixmap, GLX_FRONT_EXT, NULL);
         }
 
-        else if(xev.type == KeyPress) 
+        else if(xev.type == KeyPress)
         {
             glXReleaseTexImageEXT(dpy, glxpixmap, GLX_FRONT_EXT);
             XFree(configs);
