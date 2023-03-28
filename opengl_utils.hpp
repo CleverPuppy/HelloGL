@@ -178,6 +178,9 @@ public:
             }
         )")
         .AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
+            #ifdef GL_ES
+            precision highp float;
+            #endif
             in vec2 out_TexCoord;
             out vec4 color;
             uniform sampler2D Tex;
