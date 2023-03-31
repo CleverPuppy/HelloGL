@@ -6,7 +6,9 @@ int main()
 {
     GLProgramVersion glVersion{ API_TYPE::OGL, 3, 3 };
     GLFWHelper glfwHelper;
-    glfwHelper.InitWindow(500, 400, "test", glVersion);
+    GLuint window_width = 500;
+    GLuint window_height = 500;
+    glfwHelper.InitWindow(window_width, window_width, "test", glVersion);
 
     GLuint VAO, VBO;
 
@@ -21,6 +23,8 @@ int main()
         {0.7f, -0.2, 0.0f, 1.0f, 0.0f},
         {0.0f, 0.5, 0.0f, 0.0f, 1.0f},
     };
+
+    glViewport(0, 0, window_width, window_height);
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -45,6 +49,23 @@ int main()
                       GL_COLOR_ATTACHMENT7,
                       };
     glDrawBuffers(8, buffers);
+
+    GLuint depthBuffer;
+    glGenRenderbuffers(1, &depthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, window_width, window_height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+    constexpr int texNum = 8;
+    GLuint Tex[texNum];
+    glGenTextures(texNum, Tex);
+    GLenum target = GL_TEXTURE_2D;
+    for(int i = 0; i < texNum; ++i)
+    {
+        glBindTexture(target, Tex[i]);
+        glTexImage2D(target, 0, GL_RGBA, window_width, window_height, 0, GL_RGBA, GL_FLOAT, NULL);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, target, Tex[i], 0);
+    }
 
     GLProgramGenerator programGen;
     /*
@@ -80,10 +101,26 @@ int main()
                 FragColor6 = vec4(0.5f);
                 FragColor7 = vec4(0.5f);
                 FragColor8 = vec4(0.5f);
-                gl_FragDepth = 0.5;
+                gl_FragDepth = 0.5f;
             }
         )").AttachAndLink();
     assert(program != (GLuint)-1);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(program);
+    glEnable(GL_DEPTH_TEST);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    float glDepthValue = 2.0f;
+    float colors[4];
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(window_width / 2,  window_height / 2, 1, 1, GL_RGBA, GL_FLOAT, colors);
+    glReadPixels(window_width / 2,  window_height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &glDepthValue);
+
+    std::cout << "glDepthValue of triangle center is " << glDepthValue << std::endl;
+    std::cout << "Center color is [" << colors[0] << ", "
+                                     << colors[1] << ", "
+                                     << colors[2] << ", "
+                                     << colors[3] << "]" << std::endl;
 
     glfwHelper.Render([&glVersion, program](){
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
