@@ -77,7 +77,7 @@ private:
 };
 
 class GLProgramGenerator {
-  enum SHADER_TYPE { VERTEX = 0, FRAGMENT = 1, MAX_SHADER_SIZE };
+  enum SHADER_TYPE { VERTEX = 0, FRAGMENT = 1, COMPUTE = 2, MAX_SHADER_SIZE };
 
 public:
   GLProgramGenerator() : valid(true) {
@@ -207,6 +207,8 @@ private:
     case GL_FRAGMENT_SHADER:
       return FRAGMENT;
       break;
+    case GL_COMPUTE_SHADER:
+      return COMPUTE;
     default:
       std::cerr << "Invalid Enum " << eShaderType << std::endl;
       return -1;
@@ -279,11 +281,22 @@ public:
     glfwMakeContextCurrent(window);
 
 #ifdef USE_GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-      std::cerr << "gladLoadGLLoader failed." << std::endl;
-      glfwTerminate();
-      return false;
+    if (type == API_TYPE::OGL)
+    {
+      if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "gladLoadGLLoader failed." << std::endl;
+        glfwTerminate();
+        return false;
+      }
     }
+    else {
+      if (!gladLoadGLES2Loader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "gladLoadGLES2Loader failed." << std::endl;
+        glfwTerminate();
+        return false;
+      }
+    }
+
 #endif
 
     /* setup callbacks */
