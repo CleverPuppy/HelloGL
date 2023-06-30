@@ -5,14 +5,14 @@
 int main()
 {
     GLProgramVersion glVersion{ API_TYPE::GLES, 3, 2 };
-    // GLProgramVersion glVersion{ API_TYPE::OGL, 4, 1 };
+     //GLProgramVersion glVersion{ API_TYPE::OGL, 4, 6 };
     GLFWHelper glfwHelper;
     constexpr int tex_width = 32 * 10;
     constexpr int tex_height = 32 * 10;
     glfwHelper.InitWindow(tex_width, tex_height, "test compute", glVersion);
 
     std::vector<float> data;
-    data.resize(tex_width * tex_height * 5);
+    data.resize(tex_width * tex_height * 4);
 
     for (int i = 0; i < tex_width * tex_height; ++i)
     {
@@ -38,6 +38,9 @@ int main()
 
     GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
 
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
     GLuint vbo, ibo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -51,6 +54,8 @@ int main()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+
+    assert(glGetError() == GL_NO_ERROR);
 
     GLuint RenderProgram;
     {
@@ -94,13 +99,15 @@ int main()
                 fragColor = vec4(1., 1., 1., 1.);
                 uint aLoc =  uint(gl_FragCoord.x)  * uint(320) + uint(gl_FragCoord.y)  ;
                 fragColor = vec4(pixels.data_ssbo[aLoc], 1.0);
-                vec3 color2;
-                getColorByFragCoord(color2);
-                fragColor.xyz -= color2;
+                //vec3 color2;
+                //getColorByFragCoord(color2);
+                //fragColor.xyz -= color2;
             }
         )").AttachAndLink();
         assert(RenderProgram != (GLuint)-1);
     }
+
+    assert(glGetError() == GL_NO_ERROR);
 
     // create a compute program change texture data
     GLuint ComputeProgram;
@@ -134,7 +141,7 @@ int main()
     
     int iFrameLoc = glGetUniformLocation(ComputeProgram, "iFrame");
     // assert(iFrameLoc >= 0);
-    uint iFrame = 0;
+    GLuint iFrame = 0;
     glfwHelper.Render([&]()
         {
             iFrame += 1;
