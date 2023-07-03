@@ -75,6 +75,7 @@ int main()
             }
         )").AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
             precision highp float;
+            precision highp int;
             layout (std430, binding = 1) buffer Pixels
             {
                 vec3 data_ssbo[320 * 320];
