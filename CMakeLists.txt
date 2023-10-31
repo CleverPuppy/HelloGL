@@ -55,3 +55,5 @@ add_singlefile_exec(compute_test)
 add_singlefile_exec(compute_ssbo_test)
 add_singlefile_exec(compute_indirect_ssbo_test)
 add_singlefile_exec(compute_share_test)
+
+add_singlefile_exec(smp_test)
