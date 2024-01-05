@@ -13,6 +13,7 @@
 #include <X11/Xlib.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <GL/glext.h>
 #include "unistd.h"
 #endif
 
@@ -58,8 +59,8 @@ enum class API_TYPE
 class GLProgramVersion
 {
 public:
-    GLProgramVersion(API_TYPE eType, int major, int minor):
-        eType(eType), major(major), minor(minor) {
+    GLProgramVersion(API_TYPE eType, int major, int minor, bool bCompat = false):
+        eType(eType), major(major), minor(minor), bCompat(bCompat) {
         std::stringstream ss;
         ss << "#version " << GetGLSLVersion() <<
             (eType == API_TYPE::OGL ? " core" : " es") << "\n";
@@ -69,15 +70,17 @@ public:
     const API_TYPE eType;
     const int major;
     const int minor;
+    const bool bCompat;
 
     const std::string& GLSLVersionMacroLine() const{ return strGLSLVersionMacroLine; }
+    void OverrideGLSLVersionMarcoLine(const std::string& line) { strGLSLVersionMacroLine = line; }
 private:
     int GetGLSLVersion() { return major * 100 + minor * 10; }
     std::string strGLSLVersionMacroLine;
 };
 
 class GLProgramGenerator {
-  enum SHADER_TYPE { VERTEX = 0, FRAGMENT = 1, COMPUTE = 2, MAX_SHADER_SIZE };
+  enum SHADER_TYPE { VERTEX = 0, FRAGMENT = 1, COMPUTE = 2, GEOMETRY = 3, TESS_CTRL = 4, TESS_EVAL = 5, MAX_SHADER_SIZE };
 
 public:
   GLProgramGenerator() : valid(true) {
@@ -124,6 +127,7 @@ public:
       int length;
       glGetShaderInfoLog(nShader, sizeof(buff), &length, buff);
       std::cerr << "Compile Shader Failed. Log is " << buff << std::endl;
+      std::cerr << "Src is " << strSrc << std::endl;
       MakeInvalid();
     }
 
@@ -209,6 +213,12 @@ private:
       break;
     case GL_COMPUTE_SHADER:
       return COMPUTE;
+    case GL_GEOMETRY_SHADER:
+      return GEOMETRY;
+    case GL_TESS_CONTROL_SHADER:
+      return TESS_CTRL;
+    case GL_TESS_EVALUATION_SHADER:
+      return TESS_EVAL;
     default:
       std::cerr << "Invalid Enum " << eShaderType << std::endl;
       return -1;
@@ -439,7 +449,7 @@ static X11Window InitX11(uint width, uint height, const char* strWindowName)
     return ret;
 }
 
-static EglInfo InitEgl(const X11Window& x11Window, API_TYPE type, int major, int minor)
+static EglInfo InitEgl(const X11Window& x11Window, API_TYPE type, int major, int minor, bool bCompat = false)
 {
     std::cout << "Creating EGL " << (type == API_TYPE::OGL ? "GL" : " GLES") << std::endl;
 
@@ -475,6 +485,10 @@ static EglInfo InitEgl(const X11Window& x11Window, API_TYPE type, int major, int
         {
             attrBuilder.AppendAttr(EGL_CONFORMANT, EGL_OPENGL_BIT);
             attrBuilder.AppendAttr(EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT);
+            if(bCompat)
+            {
+              attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT);
+            }
         }
         else
         {
@@ -527,6 +541,10 @@ static EglInfo InitEgl(const X11Window& x11Window, API_TYPE type, int major, int
         if(type == API_TYPE::OGL)
         {
             attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT);
+          if(bCompat)
+          {
+            attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT);
+          }
         }
 #ifndef NDEBUG
         attrBuilder.AppendAttr(EGL_CONTEXT_OPENGL_DEBUG, EGL_TRUE);
