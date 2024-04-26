@@ -58,3 +58,4 @@ add_singlefile_exec(compute_share_test)
 
 add_singlefile_exec(smp_test)
 add_singlefile_exec(blit_test)
+add_singlefile_exec(texture_query_levels_test)
