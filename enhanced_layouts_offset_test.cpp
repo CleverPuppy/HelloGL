@@ -43,14 +43,18 @@ int main()
     UniformData uniformData = {{1.0, 0.0, 0.0, 1.0},
                                {0.0, 1.0, 0.0, 1.0},
                                {0.0, 0.0, 1.0, 1.0}};
-
+    GLuint ubo;
+    glGenBuffers(1, &ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(UniformData), &uniformData, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
     GLProgramGenerator programGen;
     GLuint program = programGen.AppendShader(glVersion, GL_VERTEX_SHADER, R"(
             #extension GL_ARB_enhanced_layouts: require
             const int locationBase = 2;
             layout(location = locationBase + 0) in vec2 Pos;
             layout(location = locationBase + 1) in vec3 Color;
-            uniform Block {
+            layout(std140) uniform Colors {
                 layout(offset = 0) vec4 color1;
                 layout(offset = 32) vec4 color3;
             };
@@ -60,6 +64,7 @@ int main()
                 gl_Position = vec4(Pos, 1, 1);
                 // out_Color = vec4(Color, 1);
                 out_Color = color1 + color3;
+                out_Color.a = 1.0;
             }
         )").AppendShader(glVersion, GL_FRAGMENT_SHADER, R"(
             precision highp float;
@@ -71,6 +76,11 @@ int main()
             }
         )").AttachAndLink();
     assert(program != (GLuint)-1);
+    glUseProgram(program);
+    GLuint ColorsUniformIdx = glGetUniformBlockIndex(program, "Colors");
+    assert(ColorsUniformIdx != (GLuint)-1);
+    glUniformBlockBinding(program, ColorsUniformIdx, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
 
     glfwHelper.Render([&glVersion, program](){
         glClearColor(0.2, 0.3, 0.4, 1.0);
